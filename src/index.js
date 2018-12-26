@@ -11,7 +11,7 @@ const bodyParser = require('body-parser');
 const { database } = require('./keys');
 
 //Inicializadores
-const app=express()
+const app=express();
 require('./lib/passport');
 //Archivos publicos
 app.use(express.static(path.join(__dirname,'/public')));
@@ -27,6 +27,9 @@ app.engine('.hbs',exphbs({
 }))
 app.set('view engine', '.hbs')
 //Middlewares
+app.use(morgan('dev'))
+app.use(express.urlencoded({extended:false}))
+app.use(express.json());
 app.use(session({
     secret: 'faztmysqlnodemysql',
     resave: false,
@@ -34,24 +37,20 @@ app.use(session({
     store: new MySQLStore(database)
 }));
 app.use(flash());
-app.use(morgan('dev'))
-app.use(express.urlencoded({extended:false}))
-app.use(express.json());
 app.use(passport.initialize());
 app.use(passport.session());
-//Routes
-app.use(require('./routes'))
-app.use(require('./routes/authentication'))
-app.use('/links',require('./routes/links'))
-
 
 //variables globales
-app.use((res,req,next)=>{
+app.use((req,res,next)=>{
     app.locals.success = req.flash('success');
     app.locals.message = req.flash('message');
     app.locals.user=req.user;
     next();
 });
+//Routes
+app.use(require('./routes'))
+app.use(require('./routes/authentication'))
+app.use('/links',require('./routes/links'))
 
 //inicio de servidor
 app.listen(app.get('port'),()=>{
